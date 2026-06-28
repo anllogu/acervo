@@ -43,10 +43,10 @@ docs/           Diseño de producto, especificación técnica y plan de fases
 | 0 | Infraestructura — FastAPI, Postgres+pgvector, migraciones, semilla, clientes stub | ✅ |
 | 1 | Captura con metadatos automáticos y deduplicación | ✅ |
 | 2 | Búsqueda híbrida — vectorial + léxica, fusión RRF k=60, filtros por faceta | ✅ |
-| 3 | Recomendación por intención (LLM → búsqueda híbrida → candidatos explicados) | 🔲 |
-| 4 | Rellenado guiado de variables + entrega del prompt listo para Cowork | 🔲 |
-| 5 | Descubrimiento y ranking multi-señal | 🔲 |
-| 6 | Pulido UX + validación de adopción | 🔲 |
+| 3 | Recomendación por intención (LLM → búsqueda híbrida → candidatos explicados) | ✅ |
+| 4 | Rellenado guiado de variables + entrega del prompt listo para Cowork | ✅ |
+| 5 | Descubrimiento y ranking multi-señal | ✅ |
+| 6 | Pulido UX + validación de adopción | ✅ |
 
 ## Decisiones pendientes (⚠ CONFIRMAR con Ángel)
 

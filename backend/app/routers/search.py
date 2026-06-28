@@ -1,7 +1,7 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 
-from ..schemas import FacetsResponse, SearchRequest, SearchResponse
-from ..services.search import get_facets, hybrid_search
+from ..schemas import DiscoverResponse, FacetsResponse, SearchRequest, SearchResponse
+from ..services.search import get_facets, get_featured, hybrid_search
 
 router = APIRouter(tags=["search"])
 
@@ -23,6 +23,19 @@ async def search(req: SearchRequest):
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
     return SearchResponse(query=req.query, total=len(candidates), candidates=candidates)
+
+
+@router.get("/discover", response_model=DiscoverResponse)
+async def discover(
+    dominio_negocio: list[str] = Query(default=[]),
+    tipo_tarea: list[str] = Query(default=[]),
+    limit: int = Query(default=20, ge=1, le=50),
+):
+    try:
+        prompts = await get_featured(dominio_negocio, tipo_tarea, limit)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    return DiscoverResponse(prompts=prompts, total=len(prompts))
 
 
 @router.get("/facets", response_model=FacetsResponse)

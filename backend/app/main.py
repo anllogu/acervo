@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .db_asyncpg import close_pool, get_pool
-from .routers import health, prompts, search
+from .routers import fill, health, prompts, recommend, search, signals, stats
 
 
 @asynccontextmanager
@@ -32,3 +32,7 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(prompts.router)
 app.include_router(search.router)
+app.include_router(recommend.router)
+app.include_router(fill.router)
+app.include_router(signals.router)
+app.include_router(stats.router)

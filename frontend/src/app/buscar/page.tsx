@@ -1,20 +1,20 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, Suspense } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
 import PageHeader from '@/components/PageHeader'
 import {
   MagnifyingGlassIcon,
   ArrowPathIcon,
-  StarIcon,
   ExclamationCircleIcon,
   ChevronRightIcon,
 } from '@heroicons/react/24/outline'
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid'
 import {
-  searchPrompts,
-  getFacets,
-  type SearchCandidate,
-  type FacetsResponse,
+  recommendPrompts,
+  type RecommendCandidate,
+  type IntentParsed,
 } from '@/lib/api'
 
 const CRITICIDAD_COLOR: Record<string, string> = {
@@ -23,39 +23,26 @@ const CRITICIDAD_COLOR: Record<string, string> = {
   alta: 'bg-red-50 text-red-700',
 }
 
-export default function BuscarPage() {
-  const [query, setQuery] = useState('')
-  const [domFiltros, setDomFiltros] = useState<string[]>([])
-  const [tareaFiltros, setTareaFiltros] = useState<string[]>([])
-  const [facets, setFacets] = useState<FacetsResponse | null>(null)
-  const [candidates, setCandidates] = useState<SearchCandidate[] | null>(null)
+function BuscarContent() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const [query, setQuery] = useState(searchParams.get('q') ?? '')
+  const [intent, setIntent] = useState<IntentParsed | null>(null)
+  const [candidates, setCandidates] = useState<RecommendCandidate[] | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Load facets once on mount
-  useEffect(() => {
-    getFacets().then(setFacets).catch(() => {})
-  }, [])
-
-  function toggleDominio(val: string) {
-    setDomFiltros(prev =>
-      prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val],
-    )
-  }
-
-  function toggleTarea(val: string) {
-    setTareaFiltros(prev =>
-      prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val],
-    )
-  }
-
-  // Debounced search triggered by query or filter changes
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
 
+    const params = new URLSearchParams()
+    if (query.trim()) params.set('q', query.trim())
+    router.replace(`/buscar${params.toString() ? `?${params.toString()}` : ''}`, { scroll: false })
+
     if (query.trim().length < 3) {
       setCandidates(null)
+      setIntent(null)
       setError(null)
       return
     }
@@ -64,15 +51,13 @@ export default function BuscarPage() {
       setLoading(true)
       setError(null)
       try {
-        const result = await searchPrompts({
-          query: query.trim(),
-          dominio_negocio: domFiltros,
-          tipo_tarea: tareaFiltros,
-        })
+        const result = await recommendPrompts({ descripcion: query.trim() })
+        setIntent(result.intent)
         setCandidates(result.candidates)
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Error al buscar')
         setCandidates(null)
+        setIntent(null)
       } finally {
         setLoading(false)
       }
@@ -81,7 +66,8 @@ export default function BuscarPage() {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
-  }, [query, domFiltros, tareaFiltros])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query])
 
   return (
     <>
@@ -102,51 +88,27 @@ export default function BuscarPage() {
             className="w-full pl-12 pr-4 py-3.5 text-sm bg-white border border-gray-200 rounded-xl
                        shadow-sm text-gray-800 placeholder-gray-400
                        focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            autoFocus
           />
           {loading && (
             <ArrowPathIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-400 animate-spin" />
           )}
         </div>
 
-        {/* ── Facet filters ── */}
-        {facets && (facets.dominio_negocio.length > 0 || facets.tipo_tarea.length > 0) && (
-          <div className="space-y-2">
-            {facets.dominio_negocio.length > 0 && (
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-xs text-gray-400 font-medium w-16 shrink-0">Dominio</span>
-                {facets.dominio_negocio.map(d => (
-                  <button
-                    key={d}
-                    onClick={() => toggleDominio(d)}
-                    className={`px-2.5 py-0.5 text-xs rounded-full border transition-colors
-                      ${domFiltros.includes(d)
-                        ? 'bg-indigo-600 text-white border-indigo-600'
-                        : 'bg-white text-gray-500 border-gray-200 hover:border-indigo-300'
-                      }`}
-                  >
-                    {d}
-                  </button>
-                ))}
-              </div>
-            )}
-            {facets.tipo_tarea.length > 0 && (
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-xs text-gray-400 font-medium w-16 shrink-0">Tarea</span>
-                {facets.tipo_tarea.map(t => (
-                  <button
-                    key={t}
-                    onClick={() => toggleTarea(t)}
-                    className={`px-2.5 py-0.5 text-xs rounded-full border transition-colors
-                      ${tareaFiltros.includes(t)
-                        ? 'bg-purple-600 text-white border-purple-600'
-                        : 'bg-white text-gray-500 border-gray-200 hover:border-purple-300'
-                      }`}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-            )}
+        {/* ── Intent chips ── */}
+        {intent && (intent.dominio_negocio.length > 0 || intent.tipo_tarea.length > 0) && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-xs text-gray-400 font-medium shrink-0">Entendido como:</span>
+            {intent.dominio_negocio.map(d => (
+              <span key={d} className="px-2.5 py-0.5 text-xs rounded-full bg-blue-50 text-blue-600 border border-blue-100">
+                {d}
+              </span>
+            ))}
+            {intent.tipo_tarea.map(t => (
+              <span key={t} className="px-2.5 py-0.5 text-xs rounded-full bg-purple-50 text-purple-600 border border-purple-100">
+                {t}
+              </span>
+            ))}
           </div>
         )}
 
@@ -164,7 +126,7 @@ export default function BuscarPage() {
             <MagnifyingGlassIcon className="w-8 h-8 text-gray-200 mx-auto mb-2" />
             <p className="text-sm font-medium text-gray-400">Sin resultados</p>
             <p className="text-xs text-gray-300 mt-1">
-              Prueba con otras palabras o quita los filtros activos
+              Prueba con otras palabras o una descripción más detallada
             </p>
           </div>
         )}
@@ -197,7 +159,15 @@ export default function BuscarPage() {
   )
 }
 
-function ResultCard({ candidate: c }: { candidate: SearchCandidate }) {
+export default function BuscarPage() {
+  return (
+    <Suspense>
+      <BuscarContent />
+    </Suspense>
+  )
+}
+
+function ResultCard({ candidate: c }: { candidate: RecommendCandidate }) {
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-3 hover:border-indigo-200 transition-colors">
       {/* Header row */}
@@ -217,6 +187,11 @@ function ResultCard({ candidate: c }: { candidate: SearchCandidate }) {
 
       {/* Propósito */}
       <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">{c.proposito}</p>
+
+      {/* Explicación LLM */}
+      {c.cuando_usarlo && (
+        <p className="text-xs text-indigo-500 italic leading-relaxed">{c.cuando_usarlo}</p>
+      )}
 
       {/* Tags */}
       {c.tags.length > 0 && (
@@ -250,9 +225,12 @@ function ResultCard({ candidate: c }: { candidate: SearchCandidate }) {
             <span className="text-xs text-red-400">PII</span>
           )}
         </div>
-        <button className="flex items-center gap-1 text-xs text-indigo-600 font-medium hover:text-indigo-700 shrink-0">
+        <Link
+          href={`/prompts/${c.id}`}
+          className="flex items-center gap-1 text-xs text-indigo-600 font-medium hover:text-indigo-700 shrink-0"
+        >
           Usar <ChevronRightIcon className="w-3 h-3" />
-        </button>
+        </Link>
       </div>
     </div>
   )

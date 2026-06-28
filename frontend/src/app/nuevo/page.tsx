@@ -145,7 +145,7 @@ export default function NuevoPage() {
                 {texto.length} caracteres
                 {texto.includes('{{') && (
                   <span className="ml-2 text-indigo-500">
-                    · Variables detectadas: {[...texto.matchAll(/\{\{(\w+)\}\}/g)].map(m => m[1]).filter((v, i, a) => a.indexOf(v) === i).join(', ')}
+                    · Variables detectadas: {Array.from(texto.matchAll(/\{\{(\w+)\}\}/g), m => m[1]).filter((v, i, a) => a.indexOf(v) === i).join(', ')}
                   </span>
                 )}
               </p>

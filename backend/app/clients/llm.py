@@ -86,20 +86,21 @@ class StubLLMClient:
             domains.append("rrhh")
         if any(w in t for w in ["factura", "presupuesto", "coste", "financi"]):
             domains.append("finanzas")
-        return domains or ["operaciones"]
+        return domains
 
     def _infer_task(self, texto: str) -> list[str]:
+        import re
         t = texto.lower()
         tasks = []
-        if any(w in t for w in ["extrae", "extraer", "identifica", "lista", "enumera"]):
+        if re.search(r'\b(extrae|extraer|identifica|lista|enumera)\b', t):
             tasks.append("extraccion")
-        if any(w in t for w in ["clasifica", "clasificar", "categoriza", "ordena"]):
+        if re.search(r'\b(clasifica|clasificar|categoriza|ordena)\b', t):
             tasks.append("clasificacion")
-        if any(w in t for w in ["redacta", "escribe", "genera", "crea", "elabora"]):
+        if re.search(r'\b(redacta|escribe|genera|crea|elabora)\b', t):
             tasks.append("generacion")
-        if any(w in t for w in ["razona", "analiza", "evalúa", "decide"]):
+        if re.search(r'\b(razona|analiza|evalúa|decide)\b', t):
             tasks.append("razonamiento")
-        return tasks or ["generacion"]
+        return tasks
 
     def _infer_pii(self, texto: str) -> bool:
         t = texto.lower()

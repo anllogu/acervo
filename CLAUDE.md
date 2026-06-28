@@ -128,10 +128,10 @@ Frontend uses the AI Manager design system as reference:
 | 0 | Infrastructure (FastAPI, Postgres+pgvector, migrations, seed, stub clients) | Done |
 | 1 | Capture with auto-metadata + deduplication | Done |
 | 2 | Hybrid search — vector + lexical, RRF k=60, facet filters | Done |
-| 3 | Intent-based recommendation (LLM intent → hybrid search → explained candidates) | Pending |
-| 4 | Guided variable fill + delivery (LLM questions per variable → filled Cowork variant) | Pending |
-| 5 | Discovery surface + multi-signal ranking | Pending |
-| 6 | UX polish + adoption validation | Pending |
+| 3 | Intent-based recommendation (LLM intent → hybrid search → explained candidates) | Done |
+| 4 | Guided variable fill + delivery (LLM questions per variable → filled Cowork variant) | Done |
+| 5 | Discovery surface + multi-signal ranking | Done |
+| 6 | UX polish + adoption validation | Done |
 
 ### What is NOT in the PoC
 

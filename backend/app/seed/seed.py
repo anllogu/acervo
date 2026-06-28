@@ -35,6 +35,14 @@ SEED_PROMPTS = [
             "3. Próximos pasos\n\n"
             "Acta:\n{{acta}}"
         ),
+        "cuerpo_cowork": (
+            "Eres un asistente experto en síntesis de reuniones. "
+            "A partir del siguiente acta, genera un resumen con estas secciones:\n"
+            "1. Decisiones tomadas\n"
+            "2. Acciones a realizar (responsable y fecha)\n"
+            "3. Próximos pasos\n\n"
+            "Acta:\n{{acta}}"
+        ),
         "tipo": "user",
         "variables": [
             {
@@ -72,6 +80,15 @@ SEED_PROMPTS = [
             "5. Fechas clave\n\n"
             "Contrato:\n{{contrato}}"
         ),
+        "cuerpo_cowork": (
+            "Analiza el siguiente contrato y extrae:\n"
+            "1. Partes contratantes\n"
+            "2. Objeto del contrato\n"
+            "3. Obligaciones principales de cada parte\n"
+            "4. Cláusulas de riesgo o penalización\n"
+            "5. Fechas clave\n\n"
+            "Contrato:\n{{contrato}}"
+        ),
         "tipo": "user",
         "variables": [
             {
@@ -101,6 +118,13 @@ SEED_PROMPTS = [
             "adaptando el tono al contexto y al destinatario."
         ),
         "cuerpo_canonico": (
+            "Redacta un email profesional en español con el siguiente propósito: "
+            "{{proposito_email}}.\n\n"
+            "Destinatario: {{destinatario}}\n"
+            "Tono: {{tono}}\n\n"
+            "El email debe ser conciso y terminar con una llamada a la acción si aplica."
+        ),
+        "cuerpo_cowork": (
             "Redacta un email profesional en español con el siguiente propósito: "
             "{{proposito_email}}.\n\n"
             "Destinatario: {{destinatario}}\n"
@@ -156,6 +180,13 @@ INSERT_SQL = """
         $12::criticidad_tipo, $13, $14,
         $15, $16::visibilidad_tipo, $17::estado_ciclo, $18::vector
     )
+    RETURNING id
+"""
+
+INSERT_VARIANTE_SQL = """
+    INSERT INTO variante_plataforma (canonico_id, plataforma, cuerpo_adaptado, creado_por)
+    VALUES ($1, 'cowork', $2, 'seed')
+    ON CONFLICT (canonico_id, plataforma) DO NOTHING
 """
 
 
@@ -168,36 +199,42 @@ async def run_seed() -> None:
     zero_vector = [0.0] * EMBEDDING_DIM
 
     for prompt in SEED_PROMPTS:
-        existing = await conn.fetchval(
+        existing_id = await conn.fetchval(
             "SELECT id FROM prompt_canonico WHERE slug = $1",
             prompt["slug"],
         )
-        if existing is not None:
-            print(f"  skip (already exists): {prompt['slug']}")
-            continue
+        if existing_id is None:
+            existing_id = await conn.fetchval(
+                INSERT_SQL,
+                prompt["slug"],
+                prompt["titulo"],
+                prompt["proposito"],
+                prompt["cuerpo_canonico"],
+                prompt["tipo"],
+                json.dumps(prompt["variables"]),
+                prompt.get("formato_salida"),
+                json.dumps(prompt.get("ejemplos", [])),
+                prompt["dominio_negocio"],
+                prompt["tipo_tarea"],
+                prompt["tags"],
+                prompt["criticidad"],
+                prompt["datos_sensibles"],
+                prompt["destacado"],
+                prompt["owner"],
+                prompt["visibilidad"],
+                prompt["estado"],
+                zero_vector,
+            )
+            print(f"  inserted: {prompt['slug']}")
+        else:
+            print(f"  skip canonico (already exists): {prompt['slug']}")
 
-        await conn.execute(
-            INSERT_SQL,
-            prompt["slug"],
-            prompt["titulo"],
-            prompt["proposito"],
-            prompt["cuerpo_canonico"],
-            prompt["tipo"],
-            json.dumps(prompt["variables"]),
-            prompt.get("formato_salida"),
-            json.dumps(prompt.get("ejemplos", [])),
-            prompt["dominio_negocio"],
-            prompt["tipo_tarea"],
-            prompt["tags"],
-            prompt["criticidad"],
-            prompt["datos_sensibles"],
-            prompt["destacado"],
-            prompt["owner"],
-            prompt["visibilidad"],
-            prompt["estado"],
-            zero_vector,
-        )
-        print(f"  inserted: {prompt['slug']}")
+        cuerpo_cowork = prompt.get("cuerpo_cowork", prompt["cuerpo_canonico"])
+        result = await conn.execute(INSERT_VARIANTE_SQL, existing_id, cuerpo_cowork)
+        if result == "INSERT 0 1":
+            print(f"  inserted variante cowork: {prompt['slug']}")
+        else:
+            print(f"  skip variante (already exists): {prompt['slug']}")
 
     await conn.close()
     print("Seed complete.")
