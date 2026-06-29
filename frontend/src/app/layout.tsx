@@ -7,7 +7,7 @@ import TopBar from '@/components/TopBar'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Acervo | SEIDOR',
+  title: 'Acervo',
   description: 'Catálogo de prompts de la organización',
 }
 

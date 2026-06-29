@@ -9,7 +9,7 @@ metadata:
 
 Use Next.js + Tailwind CSS for the Acervo frontend, NOT Streamlit.
 
-**Why:** The user explicitly said "mejor ya back y front completo" and showed the AI Manager (SEIDOR internal app) screenshot as the design reference. The design is a production-quality React app, not a Streamlit dashboard.
+**Why:** The user explicitly said "mejor ya back y front completo" and showed the AI Manager screenshot as the design reference. The design is a production-quality React app, not a Streamlit dashboard.
 
 **How to apply:** For all future frontend work on Acervo, use Next.js 14 (App Router) + Tailwind CSS. Replicate the AI Manager design system: dark gray-900 sidebar, white content area, indigo-600 primary accent, Inter font, card-based layout with rounded-xl / shadow-sm / border-gray-100.
 

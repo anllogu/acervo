@@ -57,7 +57,6 @@ export default function Sidebar() {
             </div>
             <div className="min-w-0">
               <p className="text-sm font-semibold leading-tight truncate">Acervo</p>
-              <p className="text-[10px] text-gray-400 leading-tight">SEIDOR</p>
             </div>
           </div>
         )}
