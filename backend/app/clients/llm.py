@@ -8,6 +8,7 @@ class LLMClient(Protocol):
     def understand_intent(self, descripcion: str) -> dict[str, Any]: ...
     def generate_fill_questions(self, variables: list[dict]) -> list[dict]: ...
     def explain_candidates(self, intencion: str, candidatos: list[dict]) -> list[dict]: ...
+    def run_agent_turn(self, session: dict[str, Any]) -> dict[str, Any]: ...
 
 
 class StubLLMClient:
@@ -55,6 +56,40 @@ class StubLLMClient:
             {"id": c["id"], "cuando_usarlo": c.get("proposito", "Ver descripción del prompt")}
             for c in candidatos
         ]
+
+    def run_agent_turn(self, session: dict[str, Any]) -> dict[str, Any]:
+        iteration = session["iteration"]
+        last_count = session.get("last_result_count", 0)
+        user_response = session.get("user_response")
+        query = session["original_query"]
+
+        if iteration == 0:
+            return {
+                "type": "search",
+                "query": query,
+                "dominio": self._infer_domain(query),
+                "tarea": self._infer_task(query),
+            }
+        if iteration == 1:
+            if last_count >= 1:
+                return {"type": "done"}
+            if user_response is None:
+                return {
+                    "type": "ask_user",
+                    "question": (
+                        f"No encontré suficientes resultados para «{query}». "
+                        "¿Puedes darme más contexto? Por ejemplo, ¿en qué área "
+                        "de negocio o tipo de tarea lo necesitas?"
+                    ),
+                }
+            refined = f"{query} {user_response}"
+            return {
+                "type": "search",
+                "query": refined,
+                "dominio": self._infer_domain(refined),
+                "tarea": self._infer_task(refined),
+            }
+        return {"type": "done"}
 
     # ── helpers ──────────────────────────────────────────────────────────────
 

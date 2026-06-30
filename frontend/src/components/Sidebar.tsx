@@ -11,6 +11,7 @@ import {
   Cog6ToothIcon,
   BookOpenIcon,
   ChevronLeftIcon,
+  CpuChipIcon,
 } from '@heroicons/react/24/outline'
 
 const NAV_GROUPS = [
@@ -19,6 +20,7 @@ const NAV_GROUPS = [
     items: [
       { label: 'Descubrir', href: '/descubrir', icon: SparklesIcon },
       { label: 'Buscar', href: '/buscar', icon: MagnifyingGlassIcon },
+      { label: 'Agente', href: '/agente', icon: CpuChipIcon },
     ],
   },
   {

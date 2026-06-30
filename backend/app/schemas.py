@@ -223,3 +223,30 @@ class StatsResponse(BaseModel):
     total_valoraciones_negativas: int
     prompts_this_week: int
     usos_this_week: int
+
+
+# POST /agent/search
+class AgentSearchRequest(BaseModel):
+    query: str = Field(..., min_length=1)
+    session_id: str | None = None
+    user_response: str | None = None
+
+
+class AgentQuestion(BaseModel):
+    text: str
+    context: str
+
+
+class AgentReasoningStep(BaseModel):
+    step: int
+    action: str
+    detail: str
+
+
+class AgentSearchResponse(BaseModel):
+    session_id: str
+    status: Literal["waiting", "done"]
+    question: AgentQuestion | None = None
+    intent: IntentParsed | None = None
+    candidates: list[RecommendCandidate] | None = None
+    reasoning: list[AgentReasoningStep]

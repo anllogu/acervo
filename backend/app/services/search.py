@@ -76,6 +76,7 @@ async def hybrid_search(
     dominio_negocio: list[str],
     tipo_tarea: list[str],
     limit: int,
+    lenient: bool = False,
 ) -> list[SearchCandidate]:
     pool = await get_pool()
     async with pool.acquire() as conn:
@@ -105,13 +106,26 @@ async def hybrid_search(
         # ── Lexical search ─────────────────────────────────────────────────
         facet_clause, facet_params = _facet_sql(dominio_negocio, tipo_tarea, start_idx=2)
         limit_idx = 2 + len(facet_params)
+
+        if lenient:
+            # OR semantics: stem query terms, join with | so any term is enough
+            tsquery_expr = (
+                "to_tsquery('spanish', "
+                "array_to_string("
+                "  ARRAY(SELECT lexeme FROM unnest(to_tsvector('spanish', $1)) ORDER BY 1),"
+                "  ' | '"
+                "))"
+            )
+        else:
+            tsquery_expr = "plainto_tsquery('spanish', $1)"
+
         fts_sql = f"""
             SELECT id::text
             FROM prompt_canonico
             WHERE estado != 'deprecada'
-              AND fts @@ plainto_tsquery('spanish', $1)
+              AND fts @@ {tsquery_expr}
               {facet_clause}
-            ORDER BY ts_rank(fts, plainto_tsquery('spanish', $1)) DESC
+            ORDER BY ts_rank(fts, {tsquery_expr}) DESC
             LIMIT ${limit_idx}
         """
         try:

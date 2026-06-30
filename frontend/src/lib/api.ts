@@ -304,3 +304,42 @@ export async function getStats(): Promise<StatsResponse> {
   if (!res.ok) throw new Error(`Stats error ${res.status}`)
   return res.json()
 }
+
+// ── Phase 7: Agent search ────────────────────────────────────────────────────
+
+export interface AgentQuestion {
+  text: string
+  context: string
+}
+
+export interface AgentReasoningStep {
+  step: number
+  action: string
+  detail: string
+}
+
+export interface AgentSearchResponse {
+  session_id: string
+  status: 'waiting' | 'done'
+  question?: AgentQuestion
+  intent?: IntentParsed
+  candidates?: RecommendCandidate[]
+  reasoning: AgentReasoningStep[]
+}
+
+export async function agentSearch(payload: {
+  query: string
+  session_id?: string | null
+  user_response?: string | null
+}): Promise<AgentSearchResponse> {
+  const res = await fetch(`${API_URL}/agent/search`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const detail = await res.text()
+    throw new Error(`Agent search error ${res.status}: ${detail}`)
+  }
+  return res.json()
+}
