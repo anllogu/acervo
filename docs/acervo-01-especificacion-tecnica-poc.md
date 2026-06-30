@@ -3,6 +3,7 @@
 > **Acervo** es el catálogo de prompts de la organización. "Acervo" es el nombre del producto; "el catálogo" se refiere a su función.
 > Documento 1 de 2. Acompaña a `acervo-02-plan-implementacion-fases-poc.md`.
 > Decisiones de producto y alcance: ver `acervo-00-diseno-poc.md`.
+> **Estado: PoC completada. Este documento es la especificación de diseño original.** Para el inventario exacto de lo implementado (rutas de archivo, endpoints, contratos reales) usar `acervo-03-arquitectura-implementada.md` y `acervo-04-referencia-api.md`.
 > Destinatario: agente de desarrollo. Audiencia técnica.
 
 ## Cómo usar este documento
@@ -22,10 +23,10 @@ Este es el **qué** y el **cómo**. El **orden de construcción** y los criterio
 - Señales de uso y valoración para ordenar recomendaciones (con semilla curada).
 - Una sola plataforma real: **Cowork**.
 
-**Fuera (no construir):**
-- Ejecución de prompts (vive en las plataformas destino).
-- Bucle agéntico de recuperación (*Nivel 2*, diferido a MVP).
-- Servidor MCP.
+**Fuera (no construir en PoC original — parcialmente implementado):**
+- Ejecución de prompts (vive en las plataformas destino). ❌ sigue fuera
+- Bucle agéntico de recuperación (*Nivel 2*): **implementado en Fase 7** (`POST /agent/search`). ✅
+- Servidor MCP. ❌ sigue fuera
 - Workflow de aprobación activo (los estados existen pero no hay tránsito gobernado).
 - Variantes para plataformas distintas de Cowork.
 - Reranker dedicado (opcional, solo si la calidad lo exige; ver §6.4).
@@ -36,8 +37,8 @@ Este es el **qué** y el **cómo**. El **orden de construcción** y los criterio
 ## 2. Stack
 
 - **PostgreSQL** con extensión **pgvector** (≥ 0.5 para índice HNSW). Almacén único: relacional + vectorial + full-text (`tsvector`).
-- **Backend:** Python con **FastAPI**, **Pydantic** para validación, **SQLAlchemy** (o consultas SQL directas vía `psycopg`) para acceso a datos.
-- **Frontend PoC:** **Streamlit** (objetivo: validar UX rápido, no producción).
+- **Backend:** Python con **FastAPI**, **Pydantic v2** para validación, **asyncpg** para todas las operaciones de datos (SQLAlchemy solo en health check). Ver `db_asyncpg.py`.
+- **Frontend:** **Next.js 14 App Router** + Tailwind CSS (no Streamlit; se construyó frontend propio desde la PoC para validar UX de forma más fiel).
 - **LLM:** proveedor `⚠ CONFIRMAR` (depende de si se permite API externa o se requiere on-prem por ISO 42001 / EU AI Act). Se usa para tres pasos asistidos: generación de metadatos, comprensión de intención y rellenado guiado/explicación.
 - **Embeddings:** modelo `⚠ CONFIRMAR` (misma restricción on-prem). La dimensión del vector en el esquema depende del modelo elegido (p. ej. 1536 o 3072 en familias OpenAI `text-embedding-3`). *No se fijan cifras de rendimiento; se miden con el corpus real.*
 
@@ -209,6 +210,14 @@ Todos deben devolver **JSON válido y nada más** (sin Markdown, sin preámbulo)
 ### 5.4 Explicación de candidatos
 - **Entrada:** intención del usuario + top-N candidatos (título + propósito).
 - **Salida (JSON):** `[{id, cuando_usarlo}]` — una frase breve por candidato.
+
+### 5.5 Turno de agente (Fase 7)
+- **Entrada:** dict de sesión `{original_query, iteration, last_result_count, user_response}`.
+- **Salida (JSON):** acción a ejecutar, uno de:
+  - `{"type": "search", "query": str, "dominio": list[str], "tarea": list[str]}`
+  - `{"type": "ask_user", "question": str}`
+  - `{"type": "done"}`
+- El LLM decide qué acción tomar según el estado de la sesión (número de iteraciones, resultados encontrados, respuesta del usuario).
 
 > Los textos exactos de los prompts del sistema para estos pasos los define el desarrollador; lo fijo aquí es la **forma de entrada/salida**, no la redacción.
 

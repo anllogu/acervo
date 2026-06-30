@@ -47,6 +47,7 @@ docs/           Diseño de producto, especificación técnica y plan de fases
 | 4 | Rellenado guiado de variables + entrega del prompt listo para Cowork | ✅ |
 | 5 | Descubrimiento y ranking multi-señal | ✅ |
 | 6 | Pulido UX + validación de adopción | ✅ |
+| 7 | Buscador agéntico conversacional (ReAct, sesiones stateful, fallback OR en FTS) | ✅ |
 
 ## Decisiones pendientes (⚠ CONFIRMAR con Ángel)
 
@@ -60,6 +61,11 @@ Hasta que se confirmen, el sistema funciona con `EMBEDDING_PROVIDER=stub` y `LLM
 
 ## Documentación
 
-- [`docs/acervo-00-diseno-poc.md`](docs/acervo-00-diseno-poc.md) — diseño de producto y principios
-- [`docs/acervo-01-especificacion-tecnica-poc.md`](docs/acervo-01-especificacion-tecnica-poc.md) — DDL, contratos de API y LLM
-- [`docs/acervo-02-plan-implementacion-fases-poc.md`](docs/acervo-02-plan-implementacion-fases-poc.md) — plan por fases y criterios de aceptación
+| Fichero | Propósito |
+|---------|-----------|
+| [`docs/acervo-00-diseno-poc.md`](docs/acervo-00-diseno-poc.md) | Diseño de producto, principios, decisiones cerradas |
+| [`docs/acervo-01-especificacion-tecnica-poc.md`](docs/acervo-01-especificacion-tecnica-poc.md) | DDL, contratos LLM, spec técnica original |
+| [`docs/acervo-02-plan-implementacion-fases-poc.md`](docs/acervo-02-plan-implementacion-fases-poc.md) | Plan por fases y criterios de aceptación (Fases 0–7) |
+| [`docs/acervo-03-arquitectura-implementada.md`](docs/acervo-03-arquitectura-implementada.md) | **Referencia definitiva as-built**: árbol de ficheros, tablas, flujos, decisiones críticas |
+| [`docs/acervo-04-referencia-api.md`](docs/acervo-04-referencia-api.md) | **Referencia completa de la API**: todos los endpoints con ejemplos request/response |
+| [`docs/acervo-05-guia-desarrollo.md`](docs/acervo-05-guia-desarrollo.md) | **Guía para evolutivos**: cómo añadir features, patrones, conectar LLM/embeddings reales |

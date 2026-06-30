@@ -117,6 +117,33 @@ Cada fase indica **alcance**, **tareas**, **entregable** y **criterio de aceptac
 
 ---
 
-## Lo que NO se construye en la PoC
+---
 
-Recordatorio para evitar deriva de alcance: nada de ejecución de prompts, bucle agéntico (Nivel 2), servidor MCP, workflow de aprobación activo, variantes para plataformas distintas de Cowork, ni reranker por defecto. Todo eso es MVP o posterior, y el modelo de datos ya está preparado para incorporarlo sin rehacerse.
+## Fase 7 — Buscador agéntico (ReAct + sesiones conversacionales)
+
+> Añadida tras completar Fases 0–6. Implementa el Nivel 2 de recuperación descrito en `acervo-00-diseno-poc.md §7`.
+
+**Alcance:** un agente de búsqueda stateful que puede buscar varias veces, pedir clarificación al usuario cuando los resultados son insuficientes, y mostrar su razonamiento paso a paso.
+
+**Tareas:**
+- `POST /agent/search`: recibe `{query, session_id?, user_response?}` y devuelve `{status: "waiting"|"done", question?, candidates?, reasoning[]}`.
+- Sesiones en memoria (`AgentSession`) con TTL 15 min y limpieza lazy.
+- Bucle ReAct hasta MAX_ITERATIONS=3: llama a `LLM.run_agent_turn(session_dict)` → ejecuta acción ("search", "ask_user", "done").
+- FTS lenient fallback en `hybrid_search(lenient=True)`: si el modo AND estricto devuelve 0 resultados, reintenta con OR (`to_tsvector → to_tsquery` con `|`) para cubrir consultas semánticamente próximas.
+- UI conversacional en `/agente`: estado idle → searching → (waiting_for_answer | done), con burbuja de usuario, tarjeta de pregunta con input inline, y sección de razonamiento colapsable.
+
+**Entregable:** `backend/app/services/agent_search.py`, `backend/app/routers/agent.py`, `frontend/src/app/agente/page.tsx`.
+
+**Criterio de aceptación:** una consulta como "me puedes buscar un validador de contratos?" encuentra "Analizar cláusulas de un contrato" directamente (via fallback OR); una consulta ambigua con 0 resultados en ambos modos solicita clarificación al usuario y refina la búsqueda con su respuesta.
+
+---
+
+## Lo que sigue fuera del alcance (MVP)
+
+- Ejecución de prompts (vive en las plataformas destino).
+- Servidor MCP para recuperación por agentes/IDEs.
+- Workflow de aprobación activo (en_uso → propuesta → aprobada).
+- Variantes para plataformas distintas de Cowork.
+- Reranker dedicado (cross-encoder o servicio externo).
+- Proveedor real de LLM y embeddings (pendiente `⚠ CONFIRMAR con Ángel`).
+- Capa de evaluación/regresión (tabla `evaluacion` ya modelada, sin implementar).

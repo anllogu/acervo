@@ -1,9 +1,10 @@
 # Acervo — Documento de diseño (PoC → MVP)
 
 > **Acervo** es el catálogo de prompts de la organización. A lo largo del documento, "Acervo" es el nombre del producto y "el catálogo" se usa para referirse a su función.
-> Estado: borrador de diseño para Prueba de Concepto.
+> Estado: **PoC completada** (Fases 0–7, junio 2026). Documento de diseño original conservado como referencia de intención.
 > Foco de la PoC: **UX y adopción**. El gobierno se deja *modelado y preparado*, no activado.
 > Audiencia final del sistema: **perfiles no técnicos** (negocio). La audiencia de este documento es técnica.
+> Para el estado real de implementación ver `acervo-03-arquitectura-implementada.md`.
 
 ---
 
@@ -149,7 +150,7 @@ No saltar directo al agente completo en la PoC: un agente solo es tan bueno como
 
 - **Nivel 0 — base (obligatorio):** búsqueda híbrida directa (semántica + palabra clave). Es el cimiento aunque haya un LLM encima. La búsqueda solo-vectorial falla con siglas y nombres exactos; combinar densa + léxica mejora el recall.
 - **Nivel 1 — la PoC:** comprensión de intención con LLM + búsqueda híbrida + (reranking opcional) + presentación de candidatos con explicación. Es un *pipeline de un paso*, no un bucle agéntico. Da el grueso de la experiencia "dime qué quieres y te encuentro el prompt", es barato y, sobre todo, **medible**.
-- **Nivel 2 — MVP (diferido):** recuperación agéntica con bucle (reformula y rebusca si no encuentra, descompone tareas que necesitan varios prompts encadenados, compone/adapta). Más potente, pero exige observabilidad y evaluación seria para acotar coste y comportamiento. **No construir en la PoC** salvo que el objetivo explícito fuera validar el patrón agéntico, que no es el caso.
+- **Nivel 2 — agéntico (Fase 7, implementado en PoC):** recuperación agéntica con bucle ReAct: el LLM decide si buscar de nuevo, pedir clarificación al usuario, o finalizar. Implementado en `POST /agent/search` con sesiones en memoria y UI conversacional en `/agente`. Ver `acervo-03-arquitectura-implementada.md §7`.
 
 ---
 
@@ -204,14 +205,15 @@ La PoC se considera validada si un usuario de negocio: (1) describe una tarea en
 
 ## 12. Roadmap PoC → MVP
 
-**PoC (foco: UX y adopción)**
-- Postgres + pgvector, búsqueda híbrida (Nivel 0).
-- Comprensión de intención + recomendación de candidatos (Nivel 1).
-- Captura con metadatos automáticos + detección de duplicados.
-- Modelo canónico + variantes, con una sola plataforma real (Cowork).
-- Superficie de descubrimiento con ejemplos curados.
-- Rellenado guiado de variables.
-- Estados del ciclo de vida modelados (sin workflow de aprobación activo).
+**PoC (foco: UX y adopción) — COMPLETADA junio 2026**
+- Postgres + pgvector, búsqueda híbrida vectorial + léxica con RRF (Nivel 0). ✅
+- Comprensión de intención + recomendación de candidatos (Nivel 1). ✅
+- Captura con metadatos automáticos + detección de duplicados. ✅
+- Modelo canónico + variantes, con una sola plataforma real (Cowork). ✅
+- Superficie de descubrimiento con ejemplos curados. ✅
+- Rellenado guiado de variables. ✅
+- Estados del ciclo de vida modelados (sin workflow de aprobación activo). ✅
+- Búsqueda agéntica conversacional con bucle ReAct y fallback OR en FTS (Nivel 2 parcial). ✅
 
 **MVP**
 - Workflow de aprobación activo (en_uso → propuesta → aprobada).
